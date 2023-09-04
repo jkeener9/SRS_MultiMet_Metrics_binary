@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34024.191
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SRS_MultiMet_Metrics_binary", "SRS_MultiMet_Metrics_binary.csproj", "{D6306326-3D7D-476E-B6B6-95F8AD5890AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D6306326-3D7D-476E-B6B6-95F8AD5890AE}.Debug|x64.ActiveCfg = Debug|x64
+		{D6306326-3D7D-476E-B6B6-95F8AD5890AE}.Debug|x64.Build.0 = Debug|x64
+		{D6306326-3D7D-476E-B6B6-95F8AD5890AE}.Release|x64.ActiveCfg = Release|x64
+		{D6306326-3D7D-476E-B6B6-95F8AD5890AE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {8316EEDD-7F73-41B8-9E78-92D8A25E6216}
+	EndGlobalSection
+EndGlobal
