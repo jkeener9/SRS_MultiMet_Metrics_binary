@@ -12,9 +12,12 @@ using System.Windows.Media;
 // TODO: Replace the following version attributes by creating AssemblyInfo.cs. You can do this in the properties of the Visual Studio project.
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.5")]
+[assembly: AssemblyVersion("1.0.0.8")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
+
+
+//forked from https://github.com/Kiragroh/ESAPI_SRS-MultiMets-localMetrics
 
 
 namespace VMS.TPS
@@ -57,7 +60,7 @@ namespace VMS.TPS
             DoseValue d12Gy = new DoseValue(12, DoseValue.DoseUnit.cGy);
             DoseValue dPrescGy = new DoseValue(ps.TotalDose.Dose, DoseValue.DoseUnit.cGy);
 
-            //define rings, margins and dummy for local metric calculations
+            //define expansion structures, margins, and dummy for local metric calculations
             Structure TargetRing_small_1 = ss.AddStructure("CONTROL", "zTargetRing_small_1");
             TargetRing_small_1.ConvertToHighResolution();
             Structure TargetRing_small_2 = ss.AddStructure("CONTROL", "zTargetRing_small_2");
@@ -70,7 +73,7 @@ namespace VMS.TPS
             double margin_small_1 = 4;  //expansions in mm
             double margin_small_2 = 5;
             double margin_big_1 = 14;
-            double margin_big_2 = 15;
+            double margin_big_2 = 15;  //15mm is what is used by brainlab elements
 
             //calculate TotalMU
             double TotalMU = 0;
@@ -84,13 +87,23 @@ namespace VMS.TPS
             string msg = string.Format("Local SRS metrics for plan {0} with {1}MU:\n\n", ps.Id, Math.Round(TotalMU, 0));
 
 
-            // maybe loop through GTVs, then look for PTV with same # and if found, skip GTV
-            // something iterative increasing radius?  determine if bridging, but don't want to exclude any relevant 50% dose
-                //increase radius until 50% rate of change is stable... unless keeps increasing past some threshold at which point give up because of bridging
+            // something iterative increasing or decreasing radius?  determine if bridging, but don't want to exclude any relevant 50% dose
+                //? increment radius until 50% rate of change is stable... unless keeps increasing past some threshold at which point give up because of bridging
             
             //GTV targets
-            foreach (Structure target in listStructures.Where(x => x.DicomType.ToUpper() == "GTV"))   
+            foreach (Structure target in listStructures.Where(x => x.DicomType.ToUpper() == "GTV" || x.DicomType.ToUpper() == "PTV"))   
             {
+                //check if GTV has a corresponding PTV
+                if(target.DicomType.ToUpper() == "GTV")
+                {
+                    string PTVname = target.Id.ToString().Replace("GTV", "PTV");
+                    if (ss.Structures.Any(st => st.Id.Equals(PTVname)))
+                    {
+                        continue;
+                    }
+                }
+                
+
                 dPrescGy = new DoseValue(ps.TotalDose.Dose, DoseValue.DoseUnit.cGy);
                 // change prescription dose if a totaldose limit for a referencePoint with same ID exists (since Eclipse16 structure names can be longer than 16 chars but RP-Ids not -> therefore this simplification will not always work)
                 foreach (ReferencePoint rp in ps.ReferencePoints.Where(x => x.Id == target.Id && x.TotalDoseLimit.ToString() != "N/A"))
@@ -150,7 +163,7 @@ namespace VMS.TPS
                 double GM = Math.Round(radiusV50 - radiusV100, 2);
 
 
-                //check for dose bridging. clear the metrics if dose metrics occur to prevent misreporting.
+                //check for dose bridging. clear the metrics if bridging to prevent misreporting.
                 //This method is not perfect but fast. to check whether dose pixel are between two rings would require the creation of isodose structures. Possible but would take additional time.
                 if (Math.Round(v50, 1) != Math.Round(v50_2, 1))
                 {
@@ -164,8 +177,6 @@ namespace VMS.TPS
                     CI_RTOG = Double.NaN;
                 }
                     
-                    
-
                 //calculate isocenter distance
                 Beam firstbeam = ps.Beams.Where(b => b.IsSetupField == false).First();
                 VVector isoc = new VVector(Double.NaN, Double.NaN, Double.NaN);
