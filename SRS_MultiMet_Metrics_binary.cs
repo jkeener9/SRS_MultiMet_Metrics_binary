@@ -90,7 +90,7 @@ namespace VMS.TPS
             // something iterative increasing or decreasing radius?  determine if bridging, but don't want to exclude any relevant 50% dose
                 //? increment radius until 50% rate of change is stable... unless keeps increasing past some threshold at which point give up because of bridging
             
-            //GTV targets
+            //loop through targets
             foreach (Structure target in listStructures.Where(x => x.DicomType.ToUpper() == "GTV" || x.DicomType.ToUpper() == "PTV"))   
             {
                 //check if GTV has a corresponding PTV
@@ -112,11 +112,11 @@ namespace VMS.TPS
                     break;
                 }
 
-                // skip targets that have median less dose than prescription
+                // skip targets that have median dose less than prescription
                 if (ps.GetDoseAtVolume(target, 50, VolumePresentation.Relative, DoseValuePresentation.Absolute).Dose < dPrescGy.Dose)
                     continue;
 
-                // expand PTV
+                // expand target
                 if (target.IsHighResolution)
                 {
                     TargetRing_small_1.SegmentVolume = target.Margin(margin_small_1);
