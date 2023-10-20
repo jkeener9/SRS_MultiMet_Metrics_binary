@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.12")]
+[assembly: AssemblyVersion("1.0.0.13")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -29,19 +29,19 @@ namespace VMS.TPS
         {
             // TODO : Add here the code that is called when the script is launched from Eclipse.
 
-            // check if the plan has dose
+            //check if the plan has dose
             if (!context.PlanSetup.IsDoseValid)
             {
                 MessageBox.Show("The opened plan has no valid dose.");
                 return;
             }
 
-            // get list of structures for loaded plan
+            //get list of structures for loaded plan
             StructureSet ss = context.StructureSet;
             PlanSetup ps = context.PlanSetup;
             var listStructures = ss.Structures.OrderBy(x => x.Id);
 
-            // search for body
+            //search for body
             Structure body = listStructures.Where(x => !x.IsEmpty && (x.DicomType.ToUpper().Equals("EXTERNAL") || x.Id.ToUpper().Equals("BODY"))).FirstOrDefault();
             if (body == null)
             {
@@ -49,7 +49,7 @@ namespace VMS.TPS
                 return;
             }
 
-            // enable writing with this script.
+            //enable writing with this script.
             context.Patient.BeginModifications();
 
             ps.DoseValuePresentation = DoseValuePresentation.Absolute;
@@ -66,11 +66,6 @@ namespace VMS.TPS
             Structure TargetRing_big_2 = ss.AddStructure("CONTROL", "zTargetRing_big_2");
             TargetRing_big_2.ConvertToHighResolution();
             Structure dummy = ss.AddStructure("CONTROL", "zDummy");
-            //expansions in mm
-            double margin_small_1 = 4;  //small expansions used for v100 calc
-            double margin_small_2 = 5;
-            int margin_big_1 = 9;    //initial expansions for v50 & v12 calc
-            int margin_big_2 = 10;   
 
             //calculate TotalMU
             double TotalMU = 0;
@@ -99,20 +94,25 @@ namespace VMS.TPS
                 }
 
                 dPrescGy = new DoseValue(ps.TotalDose.Dose, DoseValue.DoseUnit.cGy);
-                // change prescription dose if a totaldose limit for a referencePoint with same ID exists (since Eclipse16 structure names can be longer than 16 chars but RP-Ids not -> therefore this simplification will not always work)
+                //change prescription dose if a totaldose limit for a referencePoint with same ID exists (since Eclipse16 structure names can be longer than 16 chars but RP-Ids not -> therefore this simplification will not always work)
                 foreach (ReferencePoint rp in ps.ReferencePoints.Where(x => x.Id == target.Id && x.TotalDoseLimit.ToString() != "N/A"))
                 {
                     dPrescGy = new DoseValue(rp.TotalDoseLimit.Dose, DoseValue.DoseUnit.cGy);
                     break;
                 }
 
-                // skip targets that have median dose less than prescription
+                //skip targets that have median dose less than prescription
                 if (ps.GetDoseAtVolume(target, 50, VolumePresentation.Relative, DoseValuePresentation.Absolute).Dose < dPrescGy.Dose)
                 {
                     continue;
                 }
 
-                // expand target
+                //expansions in mm
+                double margin_small_1 = 4;  //small expansions used for v100 calc
+                double margin_small_2 = 5;
+                int margin_big_1 = 9;    //initial expansions for v50 & v12 calc
+                int margin_big_2 = 10;
+                //expand target
                 if (target.IsHighResolution)
                 {
                     TargetRing_small_1.SegmentVolume = target.Margin(margin_small_1);
@@ -159,9 +159,6 @@ namespace VMS.TPS
 
                 for (int i = margin_big_1; i < 15; i++)
                 {
-                    double v50 = ps.GetVolumeAtDose(TargetRing_big_1, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
-                    double v50_2 = ps.GetVolumeAtDose(TargetRing_big_2, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
-
                     //local v12
                     v12Gy_1 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_1, d12Gy, VolumePresentation.AbsoluteCm3), 2);
                     v12Gy_2 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_2, d12Gy, VolumePresentation.AbsoluteCm3), 2);
@@ -171,6 +168,8 @@ namespace VMS.TPS
                         v12Gy = v12Gy_2;
                     }
 
+                    double v50 = ps.GetVolumeAtDose(TargetRing_big_1, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
+                    double v50_2 = ps.GetVolumeAtDose(TargetRing_big_2, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
 
                     //Gradient Index
                     GI = Math.Round(v50 / v100, 2);
