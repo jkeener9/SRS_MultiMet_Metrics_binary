@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.11")]
+[assembly: AssemblyVersion("1.0.0.12")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -86,7 +86,7 @@ namespace VMS.TPS
             string msg = string.Format("Local SRS metrics for plan {0} with {1}MU:\n\n", ps.Id, Math.Round(TotalMU, 0));
 
             //loop through targets
-            foreach (Structure target in listStructures.Where(x => x.DicomType.ToUpper() == "GTV" || x.DicomType.ToUpper() == "PTV"))
+            foreach (Structure target in listStructures.Where(x => !x.IsEmpty && (x.DicomType.ToUpper() == "GTV" || x.DicomType.ToUpper() == "PTV")))
             {
                 //check if GTV has a corresponding PTV
                 if (target.DicomType.ToUpper() == "GTV")
