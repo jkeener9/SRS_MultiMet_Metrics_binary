@@ -1,19 +1,14 @@
 using System;
 using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using VMS.TPS.Common.Model.API;
 using VMS.TPS.Common.Model.Types;
-using System.Windows.Media;
-using System.Windows.Input;
 
-// TODO: Replace the following version attributes by creating AssemblyInfo.cs. You can do this in the properties of the Visual Studio project.
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.10")]
+[assembly: AssemblyVersion("1.0.0.11")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -74,8 +69,8 @@ namespace VMS.TPS
             //expansions in mm
             double margin_small_1 = 4;  //small expansions used for v100 calc
             double margin_small_2 = 5;
-            int margin_big_1 = 9;    //initial expansions for v50 calc
-            int margin_big_2 = 10;   //used for local v12 calc
+            int margin_big_1 = 9;    //initial expansions for v50 & v12 calc
+            int margin_big_2 = 10;   
 
             //calculate TotalMU
             double TotalMU = 0;
@@ -116,7 +111,7 @@ namespace VMS.TPS
                 {
                     continue;
                 }
-                    
+
                 // expand target
                 if (target.IsHighResolution)
                 {
@@ -141,9 +136,6 @@ namespace VMS.TPS
                     TargetRing_big_2.SegmentVolume = TargetRing_big_1.Or(TargetRing_big_2);
                 }
 
-                //local v12
-                double v12Gy_ = Math.Round(ps.GetVolumeAtDose(TargetRing_big_2, d12Gy, VolumePresentation.AbsoluteCm3), 2);
-
                 double v100 = ps.GetVolumeAtDose(TargetRing_small_1, dPrescGy, VolumePresentation.AbsoluteCm3);
                 double v100_2 = ps.GetVolumeAtDose(TargetRing_small_2, dPrescGy, VolumePresentation.AbsoluteCm3);
                 //Conformity Indices
@@ -158,13 +150,27 @@ namespace VMS.TPS
                     CI_RTOG = Double.NaN;
                 }
 
-                //Gradient Indices  --   increment expansion volume until v50 becomes consistent.  abort at 15mm (presumed bridging)
+                //Gradient Indices & V12  --   increment expansion volume until v50 becomes consistent.  abort at 15mm (presumed bridging)
                 double GM = 0.0;
                 double GI = 0.0;
+                double v12Gy = Double.NaN;
+                double v12Gy_1 = 0.0;
+                double v12Gy_2 = 0.0;
+
                 for (int i = margin_big_1; i < 15; i++)
                 {
                     double v50 = ps.GetVolumeAtDose(TargetRing_big_1, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
                     double v50_2 = ps.GetVolumeAtDose(TargetRing_big_2, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
+
+                    //local v12
+                    v12Gy_1 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_1, d12Gy, VolumePresentation.AbsoluteCm3), 2);
+                    v12Gy_2 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_2, d12Gy, VolumePresentation.AbsoluteCm3), 2);
+                    //check for dose bridging - this simplification should work based on the assumption that 12Gy is > 50% for all typical SRS Rx's
+                    if (Math.Round(v12Gy_1, 1) == Math.Round(v12Gy_2, 1))
+                    {
+                        v12Gy = v12Gy_2;
+                    }
+
 
                     //Gradient Index
                     GI = Math.Round(v50 / v100, 2);
@@ -200,7 +206,7 @@ namespace VMS.TPS
                 VVector targetCenter = target.CenterPoint;
                 double dist = Math.Round((targetCenter - isoc).Length / 10, 1);
 
-                msg += string.Format("Id: {0}\tVolume: {1}cc \tIsoDist: {2}cm\tDose: {8}cGy\n\tpCI: {3}\tCI_RTOG: {4}\tGI: {5}\tGM: {6}\tlocalV12: {7}cc\n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy_, Math.Round(dPrescGy.Dose, 0));
+                msg += string.Format("Id: {0}\tVolume: {1}cc \tIsoDist: {2}cm\tDose: {8}cGy\n\tpCI: {3}\tCI_RTOG: {4}\tGI: {5}\tGM: {6}\tlocalV12: {7}cc\n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy, Math.Round(dPrescGy.Dose, 0));
             }
 
             //delete helper structures
