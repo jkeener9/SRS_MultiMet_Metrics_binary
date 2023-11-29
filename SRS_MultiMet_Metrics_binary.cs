@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.22")]
+[assembly: AssemblyVersion("1.0.0.24")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -159,7 +159,7 @@ namespace VMS.TPS
                 }
                
                 debugmsg += string.Format("\tptv100:  {0} \tpCI:  {1} \tCI_RTOG: {2} \n", ptv100, pCI, CI_RTOG);
-                MessageBox.Show(debugmsg, "Verbose Calculations");
+                //MessageBox.Show(debugmsg, "Verbose Calculations");
 
                 //Gradient Indices & V12  --   increment expansion volume until v50 becomes consistent.  abort at 15mm (presumed bridging)
                 double GM = 0.0;
@@ -168,13 +168,13 @@ namespace VMS.TPS
                 double v12Gy_1 = 0.0;
                 double v12Gy_2 = 0.0;
 
-                for (int i = margin_big_1; i < 15; i++)
+                for (int i = margin_big_1; i < 16; i++)
                 {
                     //local v12
                     v12Gy_1 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_1, d12Gy, VolumePresentation.AbsoluteCm3), 2);
                     v12Gy_2 = Math.Round(ps.GetVolumeAtDose(TargetRing_big_2, d12Gy, VolumePresentation.AbsoluteCm3), 2);
                     //check for dose bridging - this simplification should work based on the assumption that 12Gy is > 50% for all typical SRS Rx's
-                    if (Math.Round(v12Gy_1, 1) == Math.Round(v12Gy_2, 1))
+                    if (Math.Round(v12Gy_2, 2) - Math.Round(v12Gy_1, 2) < 0.03)  //accept v12Gy value is these are within 0.03 of eachother
                     {
                         v12Gy = v12Gy_2;
                     }
