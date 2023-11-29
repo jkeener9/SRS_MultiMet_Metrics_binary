@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.13")]
+[assembly: AssemblyVersion("1.0.0.22")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -93,6 +93,8 @@ namespace VMS.TPS
                     }
                 }
 
+                string debugmsg = string.Format("Current Structure: {0} \n", target.Id.ToString());
+                
                 dPrescGy = new DoseValue(ps.TotalDose.Dose, DoseValue.DoseUnit.cGy);
                 //change prescription dose if a totaldose limit for a referencePoint with same ID exists (since Eclipse16 structure names can be longer than 16 chars but RP-Ids not -> therefore this simplification will not always work)
                 foreach (ReferencePoint rp in ps.ReferencePoints.Where(x => x.Id == target.Id && x.TotalDoseLimit.ToString() != "N/A"))
@@ -110,8 +112,10 @@ namespace VMS.TPS
                 //expansions in mm
                 double margin_small_1 = 4;  //small expansions used for v100 calc
                 double margin_small_2 = 5;
-                int margin_big_1 = 9;    //initial expansions for v50 & v12 calc
-                int margin_big_2 = 10;
+                int margin_big_1 = 8;    //initial expansions for v50 & v12 calc
+                int margin_big_2 = 9;
+
+               
                 //expand target
                 if (target.IsHighResolution)
                 {
@@ -138,6 +142,10 @@ namespace VMS.TPS
 
                 double v100 = ps.GetVolumeAtDose(TargetRing_small_1, dPrescGy, VolumePresentation.AbsoluteCm3);
                 double v100_2 = ps.GetVolumeAtDose(TargetRing_small_2, dPrescGy, VolumePresentation.AbsoluteCm3);
+
+                debugmsg += string.Format("\tv100 margin(mm): {0} \tv100_1: {1} \tv100_2: {2} \n", margin_small_1, v100, v100_2);
+                //MessageBox.Show(debugmsg, "Verbose Calculations");
+
                 //Conformity Indices
                 double targetVOL = Math.Round(target.Volume, 2);
                 double ptv100 = ps.GetVolumeAtDose(target, dPrescGy, VolumePresentation.AbsoluteCm3);
@@ -149,6 +157,9 @@ namespace VMS.TPS
                     pCI = Double.NaN;
                     CI_RTOG = Double.NaN;
                 }
+               
+                debugmsg += string.Format("\tptv100:  {0} \tpCI:  {1} \tCI_RTOG: {2} \n", ptv100, pCI, CI_RTOG);
+                MessageBox.Show(debugmsg, "Verbose Calculations");
 
                 //Gradient Indices & V12  --   increment expansion volume until v50 becomes consistent.  abort at 15mm (presumed bridging)
                 double GM = 0.0;
@@ -168,8 +179,13 @@ namespace VMS.TPS
                         v12Gy = v12Gy_2;
                     }
 
+                    debugmsg += string.Format("\tv12Gy_1: {0} \tv12Gy_2: {1} \n", v12Gy_1, v12Gy_2);
+
                     double v50 = ps.GetVolumeAtDose(TargetRing_big_1, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
                     double v50_2 = ps.GetVolumeAtDose(TargetRing_big_2, dPrescGy / 2, VolumePresentation.AbsoluteCm3);
+
+                    debugmsg += string.Format("\tv50 Margin(mm): {0} \tv50_1: {1} \tv50_2: {2} \n", margin_big_1, v50, v50_2);
+                    //MessageBox.Show(debugmsg, "Verbose Calculations");
 
                     //Gradient Index
                     GI = Math.Round(v50 / v100, 2);
@@ -178,6 +194,9 @@ namespace VMS.TPS
                     double radiusV100 = Math.Pow(((v100 * 3.0 / 4.0) / Math.PI), 1.0 / 3.0);  //must have fractions use decimals to force double instead of integer
                     double radiusV50 = Math.Pow(((v50 * 3.0 / 4.0) / Math.PI), 1.0 / 3.0);
                     GM = Math.Round(radiusV50 - radiusV100, 2);
+
+                    debugmsg += string.Format("\tGI: {0} \tGM: {1} \n", GI, GM);
+                    MessageBox.Show(debugmsg, "Verbose Calculations");
 
                     //check for dose bridging. clear the metrics if bridging to prevent misreporting.            
                     if (Math.Round(v50, 1) == Math.Round(v50_2, 1))
@@ -195,7 +214,7 @@ namespace VMS.TPS
 
                         GI = Double.NaN;
                         GM = Double.NaN;
-                    }
+                    }   
                 }
 
                 //calculate isocenter distance
@@ -205,7 +224,7 @@ namespace VMS.TPS
                 VVector targetCenter = target.CenterPoint;
                 double dist = Math.Round((targetCenter - isoc).Length / 10, 1);
 
-                msg += string.Format("Id: {0}\tVolume: {1}cc \tIsoDist: {2}cm\tDose: {8}cGy\n\tpCI: {3}\tCI_RTOG: {4}\tGI: {5}\tGM: {6}\tlocalV12: {7}cc\n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy, Math.Round(dPrescGy.Dose, 0));
+                msg += string.Format("Id: {0} \tVolume: {1}cc \tIsoDist: {2}cm \tDose: {8}cGy \n\tpCI: {3} \tCI_RTOG: {4} \tGI: {5} \tGM: {6} \tlocalV12: {7}cc \n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy, Math.Round(dPrescGy.Dose, 0));
             }
 
             //delete helper structures
@@ -217,6 +236,7 @@ namespace VMS.TPS
 
             //show result
             MessageBox.Show(msg, "SRS Plan Quality Metrics");
+            
         }
     }
 }
