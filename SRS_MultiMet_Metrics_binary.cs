@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.24")]
+[assembly: AssemblyVersion("1.0.0.27")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
@@ -25,7 +25,7 @@ namespace VMS.TPS
         }
 
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public void Execute(ScriptContext context /*, System.Windows.Window window, ScriptEnvironment environment*/)
+        public void Execute(ScriptContext context, System.Windows.Window window, ScriptEnvironment environment)
         {
             // TODO : Add here the code that is called when the script is launched from Eclipse.
 
@@ -224,7 +224,7 @@ namespace VMS.TPS
                 VVector targetCenter = target.CenterPoint;
                 double dist = Math.Round((targetCenter - isoc).Length / 10, 1);
 
-                msg += string.Format("Id: {0} \tVolume: {1}cc \tIsoDist: {2}cm \tDose: {8}cGy \n\tpCI: {3} \tCI_RTOG: {4} \tGI: {5} \tGM: {6} \tlocalV12: {7}cc \n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy, Math.Round(dPrescGy.Dose, 0));
+                msg += string.Format("Id: {0} \tVolume: {1}cc \tIsoDist: {2}cm \tDose: {8}cGy \n\tpCI: {3} \tCI_RTOG: {4} \tGI: {5} \tGM: {6} \tlocalV12: {7}cc \n\n", target.Id, targetVOL, dist, pCI, CI_RTOG, GI, GM, v12Gy, Math.Round(dPrescGy.Dose, 0));
             }
 
             //delete helper structures
@@ -235,8 +235,11 @@ namespace VMS.TPS
             ss.RemoveStructure(dummy);
 
             //show result
-            MessageBox.Show(msg, "SRS Plan Quality Metrics");
-            
+            //MessageBox.Show(msg, "SRS Plan Quality Metrics");
+
+            window.Content = msg;
+            window.Title = "SRS Plan Quality Metrics";
+            window.Width = 800;            
         }
     }
 }
