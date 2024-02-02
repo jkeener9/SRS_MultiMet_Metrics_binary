@@ -8,7 +8,7 @@ using VMS.TPS.Common.Model.Types;
 
 // TODO: Uncomment the following line if the script requires write access.
 [assembly: ESAPIScript(IsWriteable = true)]
-[assembly: AssemblyVersion("1.0.0.27")]
+[assembly: AssemblyVersion("1.0.1.00")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
 [assembly: AssemblyInformationalVersion("1.0")]
 
